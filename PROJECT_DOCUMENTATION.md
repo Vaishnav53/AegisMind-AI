@@ -327,31 +327,37 @@ The test suite in `backend/tests/` verifies all system layers using Pytest and `
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.6, pytest-9.1.1, pluggy-1.6.0
-collected 18 items
+collected 24 items
 
-backend/tests/test_api_endpoints.py::test_health_and_stats_endpoints PASSED [  5%]
-backend/tests/test_api_endpoints.py::test_security_presets_api PASSED    [ 11%]
-backend/tests/test_api_endpoints.py::test_document_upload_and_query_api PASSED [ 16%]
-backend/tests/test_research_api PASSED            [ 22%]
-backend/tests/test_security_analyze_api PASSED    [ 27%]
-backend/tests/test_workflow_api PASSED            [ 33%]
-backend/tests/test_document_agent.py::test_dense_semantic_embedding_generation PASSED [ 38%]
-backend/tests/test_document_agent.py::test_real_pdf_ingestion_and_retrieval PASSED [ 44%]
-backend/tests/test_document_agent.py::test_document_query_unrelated_content_not_found PASSED [ 50%]
-backend/tests/test_orchestrator.py::test_dynamic_agent_planning PASSED   [ 55%]
-backend/tests/test_orchestrator.py::test_multi_agent_collaboration_and_context_passing PASSED [ 61%]
-backend/tests/test_orchestrator.py::test_orchestrator_state_retrieval PASSED [ 66%]
-backend/tests/test_research_agent.py::test_research_agent_workflow PASSED [ 72%]
-backend/tests/test_research_agent.py::test_research_history_listing PASSED [ 77%]
-backend/tests/test_security_agent.py::test_security_analysis_ssh_brute_force PASSED [ 83%]
-backend/tests/test_security_agent.py::test_security_analysis_custom_arbitrary_logs PASSED [ 88%]
-backend/tests/test_security_agent.py::test_security_rule_engine_standalone PASSED [ 94%]
+backend/tests/test_api_endpoints.py::test_health_and_stats_endpoints PASSED [  4%]
+backend/tests/test_api_endpoints.py::test_security_presets_api PASSED    [  8%]
+backend/tests/test_api_endpoints.py::test_document_upload_and_query_api PASSED [ 12%]
+backend/tests/test_research_api PASSED            [ 16%]
+backend/tests/test_security_analyze_api PASSED    [ 20%]
+backend/tests/test_workflow_api PASSED            [ 25%]
+backend/tests/test_document_agent.py::test_dense_semantic_embedding_generation PASSED [ 29%]
+backend/tests/test_document_agent.py::test_real_pdf_ingestion_and_retrieval PASSED [ 33%]
+backend/tests/test_document_agent.py::test_document_query_unrelated_content_not_found PASSED [ 37%]
+backend/tests/test_orchestrator.py::test_dynamic_agent_planning PASSED   [ 41%]
+backend/tests/test_orchestrator.py::test_multi_agent_collaboration_and_context_passing PASSED [ 45%]
+backend/tests/test_orchestrator.py::test_orchestrator_state_retrieval PASSED [ 50%]
+backend/tests/test_remediation.py::test_r1_pdf_rag_ingestion_and_grounded_answer PASSED [ 54%]
+backend/tests/test_remediation.py::test_r1_out_of_domain_query_rejected PASSED [ 58%]
+backend/tests/test_remediation.py::test_r2_source_page_crawler PASSED    [ 62%]
+backend/tests/test_remediation.py::test_r2_multi_domain_research_no_static_leakage PASSED [ 66%]
+backend/tests/test_remediation.py::test_r3_r4_document_to_security_causal_dependency PASSED [ 70%]
+backend/tests/test_remediation.py::test_r4_full_orchestration_workflow_and_master_report PASSED [ 75%]
+backend/tests/test_research_agent.py::test_research_agent_workflow PASSED [ 79%]
+backend/tests/test_research_agent.py::test_research_history_listing PASSED [ 83%]
+backend/tests/test_security_agent.py::test_security_analysis_ssh_brute_force PASSED [ 87%]
+backend/tests/test_security_agent.py::test_security_analysis_custom_arbitrary_logs PASSED [ 91%]
+backend/tests/test_security_agent.py::test_security_rule_engine_standalone PASSED [ 95%]
 backend/tests/test_security_agent.py::test_security_presets_available PASSED [100%]
 
-============================= 18 passed in 12.49s =============================
+======================= 24 passed in 155.79s (0:02:35) ========================
 ```
 
-**Final Test Count**: **18 Tests Executed, 18 Passed (100% Pass Rate)**.
+**Final Test Count**: **24 Tests Executed, 24 Passed (100% Pass Rate)**.
 
 ---
 

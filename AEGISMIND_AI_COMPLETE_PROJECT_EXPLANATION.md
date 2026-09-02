@@ -47,7 +47,7 @@ AegisMind AI solves this by integrating hybrid retrieval-augmented generation (R
 
 ### 3.2 Technical Objectives
 - **Zero Heavy C-Dependencies**: Implement a pure-Python 128-dimensional dense vector projection engine combined with Okapi BM25 for offline, lightweight, deterministic RAG.
-- **Resilient Multi-Provider LLM Integration**: Provide an OpenAI-compatible adapter supporting local gateways (OmniRoute), direct cloud providers (OpenAI, Gemini, Groq), and local LLMs (Ollama) with deterministic heuristic fallback.
+- **Resilient Multi-Provider LLM Integration**: Verified primary integration with Google Gemini (`gemini-3.5-flash-lite`), with multi-provider adapter support (OpenAI, Groq, Ollama) and deterministic heuristic fallback.
 - **Thread-Safe Persistence**: Store documents, chunks, research tasks, security analyses, workflow states, and master reports in a local SQLite database.
 - **Production-Ready Modern UI**: Provide a responsive React 18 / Vite / TailwindCSS dashboard with real-time pipeline visualization and log viewer.
 
@@ -101,8 +101,8 @@ AegisMind AI solves this by integrating hybrid retrieval-augmented generation (R
                                                       v
                                   +---------------------------------------+
                                   |       Configurable LLM Service        |
-                                  |  - OpenAI-Compatible / OmniRoute      |
-                                  |  - Google Gemini / Groq / Ollama      |
+                                  |  - Google Gemini (Verified Primary)   |
+                                  |  - OpenAI / Groq / Ollama (Optional)  |
                                   |  - Grounded Heuristic Fallback Engine |
                                   +-------------------+-------------------+
                                                       |
@@ -165,7 +165,7 @@ AegisMind-AI/
 │   │   └── vector_store.py                       # Hybrid Okapi BM25 + Dense Cosine Vector Store
 │   ├── services/
 │   │   ├── __init__.py
-│   │   ├── llm_service.py                        # Configurable LLM adapter (OmniRoute/Gemini/Groq/Ollama)
+│   │   ├── llm_service.py                        # Configurable LLM adapter (Gemini/OpenAI/Groq/Ollama)
 │   │   ├── search_service.py                     # DuckDuckGo HTML parser, Wikipedia API, outbound crawler
 │   │   └── storage_service.py                    # Thread-safe SQLite persistence layer
 │   ├── tests/
@@ -288,7 +288,7 @@ The backend is built on **FastAPI** with asynchronous request handlers.
     ├── NO  -> Return context_found=False ("Cannot find answer in documents")
     └── YES -> Assemble Retrieved Chunks & Build Grounded Prompt
                     ↓
-[LLM Service Adapter] (Outbound HTTP POST to OmniRoute / OpenAI / Gemini)
+[LLM Service Adapter] (Outbound HTTP to Google Gemini / OpenAI / Fallback)
     ├── Success  -> Return Live Model Generated Answer + Citations
     └── Failure  -> Return Grounded Deterministic Fallback Answer + Citations
 ```
@@ -529,10 +529,11 @@ Implemented in [`backend/services/storage_service.py`](file:///d:/Agentic%20AI%2
 
 | External Service | Purpose | Request Flow | Auth Required? | Offline Operation / Fallback |
 | :--- | :--- | :--- | :---: | :--- |
-| **OmniRoute / OpenAI Gateway** | LLM text and JSON generation | Outbound HTTP POST to `/v1/chat/completions` | Yes (Bearer Key) | Internal grounded heuristic synthesis engine handles execution if gateway is down. |
+| **Google Generative Language API** | Verified primary LLM generation | Outbound HTTP POST to `https://generativelanguage.googleapis.com/v1beta` | Yes (API Key) | Multi-model fallback across active Gemini models + internal heuristic engine. |
 | **DuckDuckGo Search** | Live organic web search | Outbound HTTP POST to `html.duckduckgo.com/html` | No | Automatically falls back to live Wikipedia Full-Text Search API. |
 | **Wikipedia OpenSearch** | Open full-text search fallback | Outbound HTTP GET to `en.wikipedia.org/w/api.php` | No | Direct open API access without rate limits. |
 | **Target Web Servers** | Source page crawler | Outbound HTTP GET to destination URLs | No | Safe timeout (6.0s), gracefully returns search snippet if page is unreachable. |
+| **OpenAI / Alternative Gateways** | Optional secondary LLM providers | Outbound HTTP POST to `/v1/chat/completions` | Optional | Supported via `LLM_PROVIDER=openai` override with heuristic fallback. |
 
 ---
 
@@ -541,17 +542,16 @@ Implemented in [`backend/services/storage_service.py`](file:///d:/Agentic%20AI%2
 Environment variables are defined in `.env` based on `.env.example`:
 
 ```env
-# LLM Provider: "openai", "gemini", "groq", "ollama"
-LLM_PROVIDER=openai
+# Primary LLM Provider Configuration (Verified Default: Google Gemini)
+LLM_PROVIDER=gemini
+LLM_MODEL=gemini-3.5-flash-lite
+GEMINI_API_KEY=your_gemini_api_key_here
 
-# OpenAI-Compatible OmniRoute or Direct Endpoint
-OPENAI_BASE_URL=http://localhost:20128/v1
-LLM_MODEL=auto/fast
-
-# API Credentials (Keep secret - never commit .env)
-OPENAI_API_KEY=YOUR_API_KEY_HERE
-GEMINI_API_KEY=
-GROQ_API_KEY=
+# Optional Multi-Provider Overrides (Uncomment to use alternative providers)
+# OPENAI_API_KEY=your_openai_api_key_here
+# OPENAI_BASE_URL=https://api.openai.com/v1
+# GROQ_API_KEY=your_groq_api_key_here
+# OLLAMA_BASE_URL=http://localhost:11434
 
 # Search Provider
 SEARCH_PROVIDER=duckduckgo
@@ -727,7 +727,7 @@ npm run build
 6. **Does Research Agent actually crawl web pages?** Yes. It executes a secondary outbound HTTP GET request (`fetch_source_page`) to destination URLs and extracts clean text.
 7. **What does the Security Agent do?** Triages arbitrary logs, extracts IOCs, maps MITRE ATT&CK techniques, and audits compliance against internal document baselines.
 8. **What is Document → Security causal dependency?** The Security Agent alters its findings and mitigations when provided with document policy context (e.g., flagging password logins as policy violations).
-9. **What is OmniRoute?** A local OpenAI-compatible API gateway proxying requests to external LLM providers.
+9. **Which LLM provider is primary?** Google Gemini (`gemini-3.5-flash-lite`) is the verified primary provider, with optional multi-provider support for OpenAI, Groq, and Ollama.
 10. **What is the status of R1?** R1 is **`FULL`**. Binary PDF ingestion, hybrid BM25 + dense vector retrieval, and genuine live Google Gemini model completions (`gemini-3.5-flash-lite`) with in-line citations are fully verified.
 11. **Why are R2, R3, and R4 FULL?** All their core capabilities are fully implemented, verified with live network calls, and validated across 24 automated tests with zero mocks.
 12. **How do I run tests?** `python -m pytest backend/tests -v`.
@@ -747,7 +747,7 @@ npm run build
 | **REST API Layer** | [`backend/main.py`](file:///d:/Agentic%20AI%20Projects/backend/main.py)<br>[`backend/api/routes.py`](file:///d:/Agentic%20AI%20Projects/backend/api/routes.py) | FastAPI application startup, lifespan sample loader, CORS middleware, 16 REST API endpoints. |
 | **Data Models & Schemas** | [`backend/models/schemas.py`](file:///d:/Agentic%20AI%20Projects/backend/models/schemas.py) | Pydantic v2 request/response schemas, enums (`SeverityLevel`, `AgentType`, `StepStatus`). |
 | **Storage & Persistence** | [`backend/services/storage_service.py`](file:///d:/Agentic%20AI%20Projects/backend/services/storage_service.py) | Thread-safe SQLite database schema, CRUD operations for documents, chunks, research, security, workflows, and reports. |
-| **LLM Provider Adapter** | [`backend/services/llm_service.py`](file:///d:/Agentic%20AI%20Projects/backend/services/llm_service.py) | Multi-provider client (Google Gemini / OpenAI / Groq / Ollama / OmniRoute), SSE stream parser, grounded heuristic fallback engine. |
+| **LLM Provider Adapter** | [`backend/services/llm_service.py`](file:///d:/Agentic%20AI%20Projects/backend/services/llm_service.py) | Multi-provider client (Google Gemini / OpenAI / Groq / Ollama), SSE stream parser, grounded heuristic fallback engine. |
 | **Frontend Web Dashboard** | [`frontend/src/App.jsx`](file:///d:/Agentic%20AI%20Projects/frontend/src/App.jsx)<br>[`frontend/src/pages/`](file:///d:/Agentic%20AI%20Projects/frontend/src/pages/)<br>[`frontend/src/components/`](file:///d:/Agentic%20AI%20Projects/frontend/src/components/) | React 18 single-page app, Tailwind glassmorphism design, interactive studios for documents, research, security, and workflows. |
 | **Automated Test Suite** | [`backend/tests/`](file:///d:/Agentic%20AI%20Projects/backend/tests/) | 24 automated unit, integration, and causal remediation tests validating all 4 assignment requirements. |
 
