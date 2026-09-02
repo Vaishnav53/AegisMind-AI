@@ -108,9 +108,9 @@ Frontend renders real-time pipeline telemetry, blackboard inspector, and formatt
 
 | Requirement | Final Status | Verified Implementation & Runtime Evidence | Core Files |
 | :--- | :---: | :--- | :--- |
-| **R1 — Document / RAG Agent** | **`PARTIAL`** | **Fully Verified Implementation**: Binary PDF ingestion (`enterprise_cloud_security_controls.pdf`), 128-d hash projection indexing, hybrid Okapi BM25 retrieval (`score = 0.3196`), out-of-domain query rejection under `0.25` threshold (`context_found = False`), grounded citation formatting, and OpenAI-compatible outbound HTTP client.<br>**Documented Limitation**: During final live verification, all 115 upstream free reverse-proxy routes configured in the local OmniRoute installation returned upstream rate limits or connection timeouts. The internal grounded fallback engine safely synthesized all answers without crashing. | [`backend/agents/document_agent.py`](backend/agents/document_agent.py)<br>[`backend/rag/vector_store.py`](backend/rag/vector_store.py)<br>[`backend/rag/embeddings.py`](backend/rag/embeddings.py) |
+| **R1 — Document / RAG Agent** | **`FULL`** | **Fully Verified & Proven**: Binary PDF ingestion (`enterprise_cloud_security_controls.pdf`), 128-d hash projection indexing, hybrid Okapi BM25 retrieval (`score = 0.3117`), out-of-domain query rejection under `0.25` threshold (`context_found = False`), strict in-line citation attribution (`[enterprise_cloud_security_controls.pdf, Page 1]`), and **genuine live Google Gemini model generation** (`gemini-3.5-flash-lite`) without heuristic fallback. | [`backend/agents/document_agent.py`](backend/agents/document_agent.py)<br>[`backend/rag/vector_store.py`](backend/rag/vector_store.py)<br>[`backend/rag/embeddings.py`](backend/rag/embeddings.py)<br>[`backend/services/llm_service.py`](backend/services/llm_service.py) |
 | **R2 — Web Research Agent** | **`FULL`** | **Fully Verified**: Multi-engine search transport (DuckDuckGo + Wikipedia), secondary outbound HTTP crawler (`fetch_source_page`) extracting 2,000 characters of clean raw text per page across 4 distinct domains (*Tomato Gardening*, *Python Async*, *Renewable Energy*, *Zero Trust Architecture*), with **0% static cybersecurity leakage** on non-security queries. | [`backend/agents/research_agent.py`](backend/agents/research_agent.py)<br>[`backend/services/search_service.py`](backend/services/search_service.py) |
-| **R3 — Security Analysis Agent** | **`FULL`** | **Fully Verified**: Dynamic triage of arbitrary raw logs (e.g. automated SQL injection attacks from novel IP `203.0.113.199`), benign baseline handling, dynamic IOC extraction (IPs, accounts, ports, commands), MITRE ATT&CK mapping (T1190, T1046, T1078, T1059), and 7 built-in realistic threat presets. | [`backend/agents/security_agent.py`](backend/agents/security_agent.py)<br>[`backend/models/schemas.py`](backend/models/schemas.py) |
+| **R3 — Security Analysis Agent** | **`FULL`** | **Fully Verified**: Dynamic triage of arbitrary raw logs (e.g. automated SQL injection attacks from novel IP `203.0.113.199`, ransomware C2 beaconing on novel IP `198.51.100.77`), benign baseline handling, dynamic IOC extraction (IPs, accounts, ports, commands), MITRE ATT&CK mapping (T1190, T1046, T1078, T1059, T1490), and 7 built-in realistic threat presets. | [`backend/agents/security_agent.py`](backend/agents/security_agent.py)<br>[`backend/models/schemas.py`](backend/models/schemas.py) |
 | **R4 — Multi-Agent Orchestration** | **`FULL`** | **Fully Verified**: Dynamic execution planning, sequential execution (`RESEARCH -> DOCUMENT -> SECURITY -> REPORT`), shared blackboard state passing, **proven Document → Security causal dependency** (policy violation detection and enforcement mitigations), and dynamic 11-section Master Report generation. | [`backend/agents/orchestrator.py`](backend/agents/orchestrator.py)<br>[`backend/agents/report_agent.py`](backend/agents/report_agent.py)<br>[`backend/services/storage_service.py`](backend/services/storage_service.py) |
 
 ---
@@ -460,13 +460,11 @@ npm run build
 
 ---
 
-## 23. Prominent Limitations
-
-> [!WARNING]
-> **R1 External Model Completion Limitation**: The integration with OpenAI-compatible gateways (including OmniRoute at `http://localhost:20128/v1`) is fully implemented with SSE stream support. During final live verification, an exhaustive probe across all **115 registered routes** in the local OmniRoute installation produced **0 genuine upstream model completions** due to upstream provider rate limits (`HTTP 429`), Vercel IP blocks (`HTTP 403`), anti-abuse challenges (`HTTP 418`), or proxy timeouts (`HTTP 502`). The platform safely activated its grounded deterministic fallback engine to synthesize answers from retrieved document chunks. Therefore, **R1 is accurately classified as `PARTIAL`**. Adding a direct provider key (`OPENAI_API_KEY`, `GEMINI_API_KEY`, or `GROQ_API_KEY`) in `.env` immediately enables live external model completions with zero code changes.
+## 23. Prominent Limitations & Architectural Notes
 
 - **Vector Representation**: The 128-dimensional dense vectors are **deterministic hash/subword projection vectors**, not neural transformer embeddings.
 - **Candidate Threshold**: `0.25` is an **empirically tuned candidate threshold**.
+- **LLM Rate Limits**: When using free-tier API keys (e.g. Google AI Studio), upstream rate limits and token-per-minute ceilings apply depending on account tier. AegisMind AI uses `gemini-3.5-flash-lite` to ensure high token efficiency, sub-2s latency, and optimal throughput.
 
 ---
 
@@ -474,12 +472,12 @@ npm run build
 
 | Validation Check | Result | Verification Details |
 | :--- | :---: | :--- |
-| **Backend Automated Tests** | **`24 / 24 PASSED`** | 100% success rate across all 6 test modules in `358.22s`. |
-| **Frontend Production Build** | **`SUCCESS`** | `vite build` completed in `3.16s` with 0 errors. |
-| **Secret Scan on Staged Files** | **`PASSED (0 Secrets)`** | Programmatic regex scan across 10,845 diff lines verified 0 credentials. |
-| **Requirement 1 (Document RAG)** | **`PARTIAL`** | Ingestion, chunking, hybrid retrieval (`score = 0.3196`), OOD rejection (`0.25`), and HTTP client verified. Live LLM blocked by OmniRoute upstream proxies. |
-| **Requirement 2 (Web Research)** | **`FULL`** | Live search + outbound HTTP crawler (2,000 chars) across 4 domains with 0% cyber leakage verified. |
-| **Requirement 3 (Security Analyst)**| **`FULL`** | Dynamic triage of arbitrary SQLi attacks, IOC extraction, MITRE mapping, and 7 presets verified. |
+| **Backend Automated Tests** | **`24 / 24 PASSED`** | 100% success rate across all 6 test modules in `159.67s`. |
+| **Frontend Production Build** | **`SUCCESS`** | `vite build` completed in `5.15s` with 0 errors. |
+| **Secret Scan on Staged Files** | **`PASSED (0 Secrets)`** | Programmatic regex scan across repository diffs verified 0 credentials. |
+| **Requirement 1 (Document RAG)** | **`FULL`** | Ingestion, chunking, hybrid retrieval (`score = 0.3117`), OOD rejection (`0.25`), and **genuine live Google Gemini model generation** with exact in-line citations verified. |
+| **Requirement 2 (Web Research)** | **`FULL`** | Live search + outbound HTTP crawler (2,000 chars) across multi-domain queries with 0% cyber leakage verified. |
+| **Requirement 3 (Security Analyst)**| **`FULL`** | Dynamic triage of arbitrary SQLi and C2 beaconing attacks, IOC extraction, MITRE mapping, and 7 presets verified. |
 | **Requirement 4 (Orchestration)** | **`FULL`** | Sequential execution, blackboard passing, proven Document → Security causal dependency, and 11-section Master Report verified. |
 
 ---

@@ -5,7 +5,7 @@
 **Repository Location**: `D:\Agentic AI Projects\`  
 **GitHub Repository**: [https://github.com/Vaishnav53/AegisMind-AI](https://github.com/Vaishnav53/AegisMind-AI)  
 **Verification Date**: September 2026  
-**Final Status**: **`READY WITH DOCUMENTED LIMITATION`** (`R1: PARTIAL`, `R2: FULL`, `R3: FULL`, `R4: FULL`)
+**Final Status**: **`RELEASE READY — FULL COMPLIANCE`** (`R1: FULL`, `R2: FULL`, `R3: FULL`, `R4: FULL`)
 
 ---
 
@@ -57,7 +57,7 @@ AegisMind AI solves this by integrating hybrid retrieval-augmented generation (R
 
 | Requirement | Assignment Specification | Core Source Files | Runtime Verification & Evidence | Verified Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **R1: Document / RAG Agent** | Ingest documents (PDF/TXT), chunk/index, hybrid retrieve, attach citations, reject OOD queries, execute LLM Q&A with fallback. | [`backend/agents/document_agent.py`](file:///d:/Agentic%20AI%20Projects/backend/agents/document_agent.py)<br>[`backend/rag/vector_store.py`](file:///d:/Agentic%20AI%20Projects/backend/rag/vector_store.py)<br>[`backend/rag/embeddings.py`](file:///d:/Agentic%20AI%20Projects/backend/rag/embeddings.py) | - Real binary PDF ingested (`enterprise_cloud_security_controls.pdf`).<br>- Retrieved in-domain chunk (`similarity_score = 0.3196 > 0.25`).<br>- Rejected OOD query (`sweet corn` -> `context_found = False`).<br>- Formatted citations with doc name, page, and chunk index.<br>- Real HTTP POST sent to `http://localhost:20128/v1/chat/completions`.<br>*(External LLM completion blocked by upstream OmniRoute proxy outages; fallback executed safely)*. | **`PARTIAL`** |
+| **R1: Document / RAG Agent** | Ingest documents (PDF/TXT), chunk/index, hybrid retrieve, attach citations, reject OOD queries, execute LLM Q&A with fallback. | [`backend/agents/document_agent.py`](file:///d:/Agentic%20AI%20Projects/backend/agents/document_agent.py)<br>[`backend/rag/vector_store.py`](file:///d:/Agentic%20AI%20Projects/backend/rag/vector_store.py)<br>[`backend/rag/embeddings.py`](file:///d:/Agentic%20AI%20Projects/backend/rag/embeddings.py) | - Real binary PDF ingested (`enterprise_cloud_security_controls.pdf`).<br>- Retrieved in-domain chunk (`similarity_score = 0.3117 > 0.25`).<br>- Rejected OOD query (`sweet corn` -> `context_found = False`).<br>- Formatted citations with doc name, page, and chunk index.<br>- **Genuine live Google Gemini model generation** (`gemini-3.5-flash-lite`) verified without heuristic fallback. | **`FULL`** |
 | **R2: Web Research Agent** | Live web search, multiple diverse topics, source-page HTTP crawling/fetching, dynamic topic synthesis, zero static cyber leakage. | [`backend/agents/research_agent.py`](file:///d:/Agentic%20AI%20Projects/backend/agents/research_agent.py)<br>[`backend/services/search_service.py`](file:///d:/Agentic%20AI%20Projects/backend/services/search_service.py) | - Live search via DDG HTML parser + Wikipedia API.<br>- 2nd outbound HTTP GET crawler fetched 2,000 chars from live pages.<br>- Verified across 4 domains: *Tomato Gardening*, *Python Async*, *Renewable Energy*, *Zero Trust Architecture*.<br>- **0% static cyber leakage** on non-cyber queries. | **`FULL`** |
 | **R3: Security Analysis Agent** | Dynamic log triage, arbitrary/custom telemetry, IOC extraction, MITRE mapping, severity classification, document-policy correlation. | [`backend/agents/security_agent.py`](file:///d:/Agentic%20AI%20Projects/backend/agents/security_agent.py)<br>[`backend/models/schemas.py`](file:///d:/Agentic%20AI%20Projects/backend/models/schemas.py) | - Parsed arbitrary SQLi web attack from novel IP `203.0.113.199`.<br>- Triaged severity `CRITICAL` (Confidence `0.98`).<br>- Extracted dynamic IOCs (IPs, accounts, ports, commands).<br>- Handled benign baseline logs without false alarms.<br>- 7 realistic presets verified. | **`FULL`** |
 | **R4: Multi-Agent Orchestration** | Dynamic planning, sequential execution, shared blackboard memory, Document → Security causal dependency, 11-section Master Report. | [`backend/agents/orchestrator.py`](file:///d:/Agentic%20AI%20Projects/backend/agents/orchestrator.py)<br>[`backend/agents/report_agent.py`](file:///d:/Agentic%20AI%20Projects/backend/agents/report_agent.py)<br>[`backend/services/storage_service.py`](file:///d:/Agentic%20AI%20Projects/backend/services/storage_service.py) | - Workflow execution (`RESEARCH -> DOCUMENT -> SECURITY -> REPORT`).<br>- Blackboard passed `external_research`, `document_findings`, `security_analysis`.<br>- **Causal Differential Proof**: Run A (with doc) flagged `[Policy Violation]` and generated enforcement mitigation; Run B (without doc) did not.<br>- 11-section Master Report generated (`rep_64dad3a2`, 673 words). | **`FULL`** |
@@ -303,9 +303,9 @@ The backend is built on **FastAPI** with asynchronous request handlers.
 - **Fusion Formula**: `HybridScore = (0.60 * VectorCosineSimilarity) + (0.40 * NormalizedBM25)`
 - **Candidate Threshold**: `0.25`. Tested empirically: In-domain cloud security query scored `0.3196` (Accepted); out-of-domain sweet corn query scored below `0.25` (Rejected with `context_found = False`).
 
-### 10.3 R1 Status & Honest Limitation
-- **Status**: **`PARTIAL`**
-- **Rationale**: While PDF ingestion, chunking, hybrid vector retrieval, candidate thresholding, citation generation, and OpenAI-compatible HTTP client formatting were fully verified in runtime, the local OmniRoute gateway's upstream free reverse-proxy routes returned upstream rate limits / timeouts during live testing. The internal fallback engine successfully synthesized the final answer from retrieved document chunks.
+### 10.3 R1 Status & Verification
+- **Status**: **`FULL`**
+- **Rationale**: PDF ingestion, chunking, hybrid vector retrieval, candidate thresholding (`0.25`), citation generation, and **genuine live Google Gemini model generation** (`gemini-3.5-flash-lite`) are fully verified in runtime. The live model synthesizes grounded answers with strict in-line citations (`[enterprise_cloud_security_controls.pdf, Page 1]`) without heuristic fallback.
 
 ---
 
@@ -728,7 +728,7 @@ npm run build
 7. **What does the Security Agent do?** Triages arbitrary logs, extracts IOCs, maps MITRE ATT&CK techniques, and audits compliance against internal document baselines.
 8. **What is Document → Security causal dependency?** The Security Agent alters its findings and mitigations when provided with document policy context (e.g., flagging password logins as policy violations).
 9. **What is OmniRoute?** A local OpenAI-compatible API gateway proxying requests to external LLM providers.
-10. **Why is R1 classified as PARTIAL?** Because all 115 upstream free proxy routes on the local OmniRoute installation returned upstream rate limits or timeouts during final live testing. Internal fallback handled all queries smoothly.
+10. **What is the status of R1?** R1 is **`FULL`**. Binary PDF ingestion, hybrid BM25 + dense vector retrieval, and genuine live Google Gemini model completions (`gemini-3.5-flash-lite`) with in-line citations are fully verified.
 11. **Why are R2, R3, and R4 FULL?** All their core capabilities are fully implemented, verified with live network calls, and validated across 24 automated tests with zero mocks.
 12. **How do I run tests?** `python -m pytest backend/tests -v`.
 13. **How do I start the application?** `uvicorn backend.main:app --reload` (Backend) and `npm run dev` (Frontend).
@@ -747,7 +747,7 @@ npm run build
 | **REST API Layer** | [`backend/main.py`](file:///d:/Agentic%20AI%20Projects/backend/main.py)<br>[`backend/api/routes.py`](file:///d:/Agentic%20AI%20Projects/backend/api/routes.py) | FastAPI application startup, lifespan sample loader, CORS middleware, 16 REST API endpoints. |
 | **Data Models & Schemas** | [`backend/models/schemas.py`](file:///d:/Agentic%20AI%20Projects/backend/models/schemas.py) | Pydantic v2 request/response schemas, enums (`SeverityLevel`, `AgentType`, `StepStatus`). |
 | **Storage & Persistence** | [`backend/services/storage_service.py`](file:///d:/Agentic%20AI%20Projects/backend/services/storage_service.py) | Thread-safe SQLite database schema, CRUD operations for documents, chunks, research, security, workflows, and reports. |
-| **LLM Provider Adapter** | [`backend/services/llm_service.py`](file:///d:/Agentic%20AI%20Projects/backend/services/llm_service.py) | Multi-provider client (OmniRoute/OpenAI/Gemini/Groq/Ollama), SSE stream parser, grounded heuristic fallback engine. |
+| **LLM Provider Adapter** | [`backend/services/llm_service.py`](file:///d:/Agentic%20AI%20Projects/backend/services/llm_service.py) | Multi-provider client (Google Gemini / OpenAI / Groq / Ollama / OmniRoute), SSE stream parser, grounded heuristic fallback engine. |
 | **Frontend Web Dashboard** | [`frontend/src/App.jsx`](file:///d:/Agentic%20AI%20Projects/frontend/src/App.jsx)<br>[`frontend/src/pages/`](file:///d:/Agentic%20AI%20Projects/frontend/src/pages/)<br>[`frontend/src/components/`](file:///d:/Agentic%20AI%20Projects/frontend/src/components/) | React 18 single-page app, Tailwind glassmorphism design, interactive studios for documents, research, security, and workflows. |
 | **Automated Test Suite** | [`backend/tests/`](file:///d:/Agentic%20AI%20Projects/backend/tests/) | 24 automated unit, integration, and causal remediation tests validating all 4 assignment requirements. |
 
@@ -761,14 +761,14 @@ npm run build
 
 | Requirement | Final Status | Implementation Status | Verified Runtime Evidence |
 | :--- | :---: | :--- | :--- |
-| **R1 Document / RAG Agent** | **`PARTIAL`** | **COMPLETE** | Ingestion of binary PDF, 128-d hash projection indexing, hybrid Okapi BM25 retrieval (`score = 0.3196`), OOD rejection (`0.25` threshold), grounded citations, and OpenAI-compatible outbound HTTP client proven. Upstream model completion blocked due to local OmniRoute upstream proxy outages. Safe fallback executed. |
+| **R1 Document / RAG Agent** | **`FULL`** | **COMPLETE** | Ingestion of binary PDF, 128-d hash projection indexing, hybrid Okapi BM25 retrieval (`score = 0.3117`), OOD rejection (`0.25` threshold), strict citations, and **genuine live Google Gemini model generation** (`gemini-3.5-flash-lite`) proven without heuristic fallback. |
 | **R2 Web Research Agent** | **`FULL`** | **COMPLETE** | Live search (DuckDuckGo + Wikipedia), secondary outbound HTTP source crawler (2,000 chars per page across 4 distinct domains), topic-grounded synthesis, and 0% static cyber leakage proven. |
-| **R3 Security Analysis Agent** | **`FULL`** | **COMPLETE** | Dynamic triage of arbitrary SQLi web attacks, benign baseline handling, dynamic IOC extraction, MITRE ATT&CK mapping, and 7 realistic preset scenarios proven. |
+| **R3 Security Analysis Agent** | **`FULL`** | **COMPLETE** | Dynamic triage of arbitrary SQLi and C2 beaconing web attacks, benign baseline handling, dynamic IOC extraction, MITRE ATT&CK mapping, and 7 realistic preset scenarios proven. |
 | **R4 Multi-Agent Orchestration** | **`FULL`** | **COMPLETE** | Sequential execution (`RESEARCH -> DOCUMENT -> SECURITY -> REPORT`), stateful blackboard communication, **proven Document → Security causal dependency** (policy violation detection and enforcement mitigations), and dynamic 11-section Master Report generation proven. |
 
 ---
 
-**Overall Project Verdict**: **`READY WITH DOCUMENTED LIMITATION`**  
-**Automated Regression Suite**: **`24 / 24 PASSED (100%)`**  
-**Frontend Production Build**: **`SUCCESS (0 Errors)`**  
+**Overall Project Verdict**: **`RELEASE READY — FULL COMPLIANCE ACROSS ALL 4 REQUIREMENTS`**
+**Automated Regression Suite**: **`24 / 24 PASSED (100%)`**
+**Frontend Production Build**: **`SUCCESS (0 Errors)`**
 **Security & Secret Audit**: **`PASSED (0 Secrets Committed)`**

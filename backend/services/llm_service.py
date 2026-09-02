@@ -101,9 +101,14 @@ class LLMService:
     async def _call_gemini(
         self, prompt: str, system_prompt: Optional[str], temperature: float, max_tokens: int
     ) -> str:
+        self._reload_config()
         key = os.getenv("GEMINI_API_KEY") or self.api_key
-        model_name = self.model if "gemini" in self.model else "gemini-1.5-flash"
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}"
+        target_model = self.model if "gemini" in self.model else "gemini-3.5-flash-lite"
+
+        models_to_try = [target_model]
+        for fallback_m in ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.1-flash-lite"]:
+            if fallback_m not in models_to_try:
+                models_to_try.append(fallback_m)
 
         contents = []
         if system_prompt:
@@ -119,11 +124,26 @@ class LLMService:
             },
         }
 
+        last_err = None
         async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(url, json=payload)
-            resp.raise_for_status()
-            data = resp.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"]
+            for model_name in models_to_try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}"
+                try:
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        return data["candidates"][0]["content"]["parts"][0]["text"]
+                    elif resp.status_code == 503:
+                        logger.info(f"Gemini model {model_name} returned 503; attempting fallback...")
+                        last_err = f"HTTP 503 from {model_name}"
+                        continue
+                    else:
+                        resp.raise_for_status()
+                except Exception as e:
+                    last_err = e
+                    continue
+
+        raise Exception(f"All Gemini models failed: {last_err}")
 
     async def _call_openai_compatible(
         self, prompt: str, system_prompt: Optional[str], temperature: float, max_tokens: int
