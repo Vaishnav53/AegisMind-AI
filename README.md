@@ -421,11 +421,11 @@ npm run build
 
 | Environment Variable | Description | Default Value | Required? |
 | :--- | :--- | :--- | :---: |
-| `LLM_PROVIDER` | LLM service provider (`"openai"`, `"gemini"`, `"groq"`, `"ollama"`) | `openai` | Optional |
-| `OPENAI_BASE_URL` | OpenAI-compatible base URL (e.g. OmniRoute gateway) | `http://localhost:20128/v1` | Optional |
-| `LLM_MODEL` | Target LLM model name | `auto/fast` | Optional |
-| `OPENAI_API_KEY` | OpenAI or OmniRoute gateway API key | None | Optional |
+| `LLM_PROVIDER` | LLM service provider (`"gemini"`, `"openai"`, `"groq"`, `"ollama"`) | `gemini` | Optional |
+| `LLM_MODEL` | Target LLM model name | `gemini-3.5-flash-lite` | Optional |
 | `GEMINI_API_KEY` | Google Gemini API key | None | Optional |
+| `OPENAI_API_KEY` | OpenAI API key (optional alternative) | None | Optional |
+| `OPENAI_BASE_URL` | OpenAI-compatible base URL | `https://api.openai.com/v1` | Optional |
 | `GROQ_API_KEY` | Groq Cloud API key | None | Optional |
 | `SEARCH_PROVIDER` | Web search transport (`"duckduckgo"`, `"tavily"`) | `duckduckgo` | Optional |
 | `BACKEND_HOST` | FastAPI host binding address | `0.0.0.0` | Optional |

@@ -30,7 +30,7 @@ class LLMService:
             or os.getenv("GROQ_API_KEY")
             or ""
         )
-        self.model = os.getenv("LLM_MODEL", "gemini-1.5-flash")
+        self.model = os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
         self.openai_base_url = os.getenv("OPENAI_BASE_URL") or os.getenv("LLM_BASE_URL") or "https://api.openai.com/v1"
         self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 

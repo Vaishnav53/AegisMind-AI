@@ -285,7 +285,7 @@ export default function Dashboard({ setActiveTab, stats, refreshStats }) {
               </div>
               <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5">
                 <span className="text-slate-400">Model Engine</span>
-                <span className="font-mono text-cyan-400 text-[11px]">{stats?.llm_model || 'gemini-1.5-flash'}</span>
+                <span className="font-mono text-cyan-400 text-[11px]">{stats?.llm_model || 'gemini-3.5-flash-lite'}</span>
               </div>
               <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5">
                 <span className="text-slate-400">Vector Store</span>
